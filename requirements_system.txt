@@ -1,0 +1,4 @@
+python3-pip
+pylint3
+python3-pylint-django
+python3-pylint-plugin-utils
