@@ -15,65 +15,66 @@
 
     <body>
 
-        <!-- TOP -->
+        <div class="container-fluid d-flex flex-column flex-grow-1 vh-100 overflow-auto">
+            
+            <!-- TOP -->
 
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="{% url 'core:items' %}">Recipes</a>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <a class="navbar-brand" href="{% url 'core:items' %}">Recipes</a>
 
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav mr-auto">
-              
-                    {% for key, val in tags %}
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                  
+                        {% for key, val in tags %}
+                            <li class="nav-item active">
+                                <a class="nav-link" href="{% url 'core:items' key %}">{{ val }}</a>
+                            </li>
+                        {% endfor %}
+
+
+                    </ul>
+
+                    <ul class="navbar-nav">
+
                         <li class="nav-item active">
-                            <a class="nav-link" href="{% url 'core:items' key %}">{{ val }}</a>
+                            <a class="nav-link" href="{% url 'core:rescan' %}">Rescan</a>
                         </li>
-                    {% endfor %}
 
+                        <form action="{% url 'core:search' %}" method="get" class="form-inline my-2 my-lg-0">
+                            {% if tag %}
+                                <input type="hidden" name="tag" value="{{ tag }}">
+                            {% endif %}
+                            <input name='lookfor' class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                        </form>
 
-                </ul>
+                    </ul>
+                </div>
+            </nav>
 
-                <ul class="navbar-nav">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
 
-                    <li class="nav-item active">
-                        <a class="nav-link" href="{% url 'core:rescan' %}">Rescan</a>
-                    </li>
+                    <div class="col-12 col-sm-3">
+                        {% block side %}
+                        SIDE
+                        {% endblock %}
+                    </div>
 
-                    <form action="{% url 'core:search' %}" method="get" class="form-inline my-2 my-lg-0">
-                        {% if tag %}
-                            <input type="hidden" name="tag" value="{{ tag }}">
-                        {% endif %}
-                        <input name='lookfor' class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                        <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                    </form>
+                    <div class='col-12 col-sm-9 order-last order-sm-0'>
+                        {% block content %}
+                        MAIN
+                        {% endblock %}
+                    </div>
 
-                </ul>
-            </div>
-        </nav>
-
-         <div class="row">
-
-            <!-- SIDE -->
-            <div class="col col-md-2">
-                {% block side %}
-                    <p>SIDE</p>
-                {% endblock %}
-            </div>
-
-            <!-- CONTENT -->
-            <!--<div class='container-fluid col-10 d-flex flex-column'>-->
-            <div class='col-6 col-md-10'>
-                {% block content %}
-                    <p>CONTENT</p>
-                {% endblock %}
+                </div>
             </div>
 
-         </div>
-
-        <!-- MAIN -->
+        </div>
 
 
     <!-- Optional JavaScript -->
