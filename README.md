@@ -17,24 +17,16 @@ view.  Should be able to create/view/edit/delete.
 
 2. Initialize empty models in the database
 
-        ./manage.py migrate
+        ./ws/manage.py migrate
 
-6. Start up the development server
+3. Configure where doc repo is by editing `ws/conf/settings.py`:
 
-        ./manage.py runserver 0:8000
+        DOC_REPO = '/blah/blah'
 
-7. Make a superuser admin account
+4. Start up the development server
 
-        ./manage.py createsuperuser --username=admin
-            --email=matt.wilkins@niwa.co.nz
+        ./ws/manage.py runserver 0:8000
 
-8. There are multiple versions of the settings that are controlled via
-   `conf/settings/__init__.py` which imports `default.py` and then the
-   required version based on the git branch you are tracking.  A `prod`
-   branch means the `conf/settings/prod.py` are used.
-
-9. Edit `ALLOWED_HOSTS` in `conf/settings/default.py` to control access
-   to the server.
 
 ## Running Django in production
 

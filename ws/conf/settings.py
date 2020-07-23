@@ -27,10 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost']
 
+DOC_REPO = '/var/tmp/recipes/mine'
 
 # Application definition
 
 INSTALLED_APPS = [
+    'core.apps.CoreConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -105,7 +107,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Pacific/Auckland'
+
 
 USE_I18N = True
 

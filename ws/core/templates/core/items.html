@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+
+{% block side %}
+
+	{% if tag %}
+		{% for it in items %}
+			<a href="{% url 'core:item' it.id tag %}">{{ it.title }}</a>
+            <br />
+		{% endfor %}
+	{% else %}
+		{% for it in items %}
+			<a href="{% url 'core:item' it.id %}">{{ it.title }}</a>
+            <br />
+		{% endfor %}
+	{% endif %}
+
+{% endblock %}
+
+{% block content %}
+    {% if msg %}
+    {{ msg }}
+    {% endif %}
+{% endblock %}
+
