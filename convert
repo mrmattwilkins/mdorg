@@ -1,0 +1,32 @@
+#!/usr/bin/python3
+
+import re
+from django.utils.text import slugify
+
+with open('recipes') as f:
+    title = None
+    content = ''
+    t2c = {}
+    while (line := f.readline()):
+        if (m := re.match(r'^Title:(.*?)$', line)):
+            if title and content:
+                t2c[title] = content
+                content = ''
+            title = m.group(1).strip().title()
+        elif title:
+            content += line
+
+
+for key, val in t2c.items():
+    # it would be nice if newlines had blank blank first
+    val = re.sub('\n', '  \n', val)
+
+    with open('data/' + slugify(key) + '.md', 'w') as f:
+        f.write('---\n')
+        f.write(f'title: {key}\n')
+        f.write(f'date: 2020-07-23\n')
+        f.write('---\n')
+        f.write('\n')
+        f.write(val + '\n')
+
+
