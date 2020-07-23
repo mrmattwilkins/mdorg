@@ -69,7 +69,7 @@ def search(request):
 
     return items(request, tag=tag, msg=mark_safe(''.join(msg)))
 
-def items(request, tag=None, msg=None):
+def items(request, tag=None, msg=None, hideme=None):
     """Return items in sidebar with possible message in main
 
     Parameters
@@ -78,6 +78,7 @@ def items(request, tag=None, msg=None):
 
     tag: int
         Tag id.  If given only these items will be in sidebar (otherwise all)
+        -1 is a special tag that means order by most recently accessed
     msg: str
         A mark_safed string to display in the main
 
@@ -88,6 +89,7 @@ def items(request, tag=None, msg=None):
         (t.id, t.name)
         for t in Tag.objects.all().order_by('name')
     ]
+    #tags.append((0, 'recent'))
 
     if tag:
         its = Item.objects.filter(tags__id=tag).order_by('title')
@@ -98,6 +100,7 @@ def items(request, tag=None, msg=None):
         'tags': tags,
         'tag': tag,
         'items': its,
+        'hideme': hideme,
         'msg': msg
     })
 
@@ -150,6 +153,6 @@ def item(request, pkey, tag=None):
         fh.write(frontmatter.dumps(text))
         it.save()
 
-    return items(request, tag, msg=mark_safe(''.join(msg)))
+    return items(request, tag, msg=mark_safe(''.join(msg)), hideme='d-none d-sm-block')
 
 

@@ -59,7 +59,7 @@
             <div class="container-fluid">
                 <div class="row justify-content-center">
 
-                    <div class="col-12 col-sm-3">
+                    <div class="{{ hideme|default_if_none:'' }} col-12 col-sm-3">
                         {% block side %}
                         SIDE
                         {% endblock %}
