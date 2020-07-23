@@ -22,10 +22,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'lks4#(+b7d@h=x3+@f%83mipodam1n0p)zlejz-n_lo*%d_r)2'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
+with open('/etc/django_secret_key.txt') as f:
+    SECRET_KEY = f.read().strip()
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['gaia', 'gaia.solace.net', 'localhost']
 
 DOC_REPO = '/var/tmp/recipes/mine'
 
@@ -121,3 +122,32 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': '[%(asctime)s] %(levelname)s: '
+                      '%(message)s',
+        }
+    },
+    'handlers': {
+        'file': {
+            'class': 'logging.handlers.'
+                     'TimedRotatingFileHandler',
+            'filename': '/var/log/mdorg/'
+                        'mdorg.log',
+            'when': 'midnight',
+            'backupCount': 20,
+            'formatter': 'default',
+        },
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'INFO',
+    },
+}
+
+
+

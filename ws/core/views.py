@@ -55,7 +55,8 @@ def search(request):
         else:
             with open(it.path, 'r') as handle:
                 body = frontmatter.load(handle).content
-                if (m := re.search(txt, body, re.IGNORECASE)):
+                m = re.search(txt, body, re.IGNORECASE)
+                if m:
                     found = it
                     context = f"...{body[max(m.start()-20, 0):min(m.end()+20, len(body))]}..."""
        
