@@ -73,11 +73,16 @@ $(document).ready(function() {
             success: function (data) {
                 if (data.success) {
                     $("#title").html(data.title);
-                    var tids = JSON.parse(data.tags);
-                    tids.forEach(tid => {
-                        tags[tid]
-                    });
-                    console.log(tids);
+                    const tagstr = JSON.parse(data.tags).map(
+                        tid => [tid, tags[tid]]
+                    ).sort(
+                        (a, b) => a[1].localeCompare(b[1])
+                    ).map(
+                        idtag => "<a href='#' class='tagclicker' id=tagid-" + idtag[0] + ">" + idtag[1] + "</a>"
+                    ).join()
+
+                    console.log(tagstr);
+                    $("#tags").html(tagstr);
                     $("#created").html(data.created);
                     $("#last").html(data.last);
                     $("#filename").html(data.filename);
@@ -88,6 +93,10 @@ $(document).ready(function() {
             }
         });
 
+    });
+
+    $(".tagclicker").click(function (e) {
+        console.log(e.target.id);
     });
 
 
