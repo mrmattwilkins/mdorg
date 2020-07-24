@@ -16,6 +16,9 @@ urlpatterns = [
    path('item/<int:pkey>/', views.item, name='item'),
    path('item/<int:pkey>/<int:tag>', views.item, name='item'),
 
+   path('zitem/', views.zitem, name='zitem'),
+   path('ztags/', views.ztags, name='ztags'),
+
    #path('item/<int:pkey>/edit/', item.edit, name='item_edit'),
    #path('item/new/', item.new, name='item_new'),
    #path('item/<int:pkey>/delete/', item.delete, name='item_delete'),

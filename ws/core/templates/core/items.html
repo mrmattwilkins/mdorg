@@ -3,6 +3,7 @@
 
 {% block side %}
 
+<!--
 	{% if tag %}
 		{% for it in items %}
 			<a href="{% url 'core:item' it.id tag %}">{{ it.title }}</a>
@@ -14,6 +15,11 @@
             <br />
 		{% endfor %}
 	{% endif %}
+-->
+		{% for it in items %}
+            <a href="#" class="xlist-group-item" id="{{it.id}}">{{ it.title }}</a>
+            <br />
+		{% endfor %}
 
 {% endblock %}
 
@@ -21,5 +27,76 @@
     {% if msg %}
     {{ msg }}
     {% endif %}
+    <h2 id="title" style="display:inline;"></h2>
+    <div id="tags"></div>
+    <small>
+        <i>Created: </i><label id="created"></label><br />
+        <i>Last access: </i><label id="last"></label><br />
+        <i>Filename: </i><label id="filename"></label><br />
+    </small>
+    <div id="itemout"></div>
 {% endblock %}
+
+
+{% block javascript %}
+
+<script>
+$(document).ready(function() {
+
+
+    const tags = function() {
+        var tmp = null;
+        $.ajax({
+            url: {% url 'core:ztags' %},
+            dataType: 'json',
+            async: false,
+            success: function (data) {
+                if (data.success) {
+                    tmp = JSON.parse(data.tags);
+                } else {
+                    alert("Couldn't get tags\nMessage was: " + data.msg);
+                }
+            }
+        });
+        return tmp;
+    }();
+
+    console.log(tags);
+
+    $(".xlist-group-item").click(function (e) {
+        $.ajax({
+            url: {% url 'core:zitem' %},
+            data: {
+                'id': e.target.id
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    $("#title").html(data.title);
+                    var tids = JSON.parse(data.tags);
+                    tids.forEach(tid => {
+                        tags[tid]
+                    });
+                    console.log(tids);
+                    $("#created").html(data.created);
+                    $("#last").html(data.last);
+                    $("#filename").html(data.filename);
+                    $("#itemout").html(data.content);
+                } else {
+                    alert("Couldn't get info for item " + e.target.id + "\nMessage was: " + data.msg);
+                }
+            }
+        });
+
+    });
+
+
+});
+</script>
+
+
+      
+{% endblock %}
+
+
 

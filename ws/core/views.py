@@ -2,6 +2,7 @@ import os
 import re
 import markdown
 import frontmatter
+import json
 from pathlib import Path
 
 from django.shortcuts import render
@@ -10,6 +11,8 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils import timezone
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse
 
 
 from .models import Item, Tag
@@ -154,5 +157,95 @@ def item(request, pkey, tag=None):
         it.save()
 
     return items(request, tag, msg=mark_safe(''.join(msg)), hideme='d-none d-sm-block')
+
+@require_http_methods(["GET"])
+def ztags(request):
+    """The tags
+
+    Parameters
+    ----------
+    request : django.http.request
+
+    Returns
+    -------
+    JsonResponse
+        {
+            'success': bool
+            'tags': dict (id to name)
+            'msg': str
+        }
+        The msg is only there if there was a problem
+
+    """
+
+    tags = {
+        t.id: t.name
+        for t in Tag.objects.all().order_by('name')
+    }
+
+    return JsonResponse({
+        'success': True,
+        'tags': json.dumps(tags)
+    })
+
+
+
+@require_http_methods(["GET"])
+def zitem(request):
+    """An item
+
+    Parameters
+    ----------
+    request : django.http.request
+        request['id'] is an item ID
+
+    Returns
+    -------
+    JsonResponse
+        {
+            'success': bool
+            'title': str
+            'created': str (YYYY-MM-DD HH:MM:SS) or None
+            'last': str either YYYY-MM-DD HH:MM:SS or 'never'
+            'tags': list of tag ids
+            'filename': str
+            'content': html str
+            'msg': str
+        }
+        The msg is only there if there was a problem
+
+    """
+
+    try:
+        it = Item.objects.get(pk=json.loads(request.GET['id']))
+    except Exception as exp: # pylint: disable=broad-except
+        return JsonResponse({'success': False, 'msg': str(exp)})
+    
+    tags = [t.id for t in it.tags.all()]
+    created = timezone.localtime(it.created).strftime("%Y-%m-%d %H:%M") if it.created else None
+    last = timezone.localtime(it.accessed).strftime("%Y-%m-%d %H:%M") if it.accessed else 'never'
+
+    # get the content
+    with open(it.path, "r", encoding="utf-8") as fh:
+        text = frontmatter.load(fh)
+        content = markdown.markdown(text.content)
+
+    # save back with correct accessed
+    with open(it.path, "w", encoding="utf-8") as fh:
+        text['accessed'] = it.accessed = timezone.now()
+        fh.write(frontmatter.dumps(text))
+        it.save()
+
+    return JsonResponse({
+        'success': True,
+        'title': it.title,
+        'created': timezone.localtime(it.created).strftime("%Y-%m-%d %H:%M")
+                   if it.created else None,
+        'last': last,
+        'tags': json.dumps(tags),
+        'filename': os.path.basename(it.path),
+        'content': content
+    })
+
 
 
