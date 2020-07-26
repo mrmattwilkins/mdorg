@@ -2,52 +2,71 @@
 
 
 {% block side %}
-
-<!--
-	{% if tag %}
-		{% for it in items %}
-			<a href="{% url 'core:item' it.id tag %}">{{ it.title }}</a>
-            <br />
-		{% endfor %}
-	{% else %}
-		{% for it in items %}
-			<a href="{% url 'core:item' it.id %}">{{ it.title }}</a>
-            <br />
-		{% endfor %}
-	{% endif %}
--->
-		{% for it in items %}
-            <a href="#" class="xlist-group-item" id="{{it.id}}">{{ it.title }}</a>
-            <br />
-		{% endfor %}
-
+    <div id="sidebar"></div>
 {% endblock %}
 
 {% block content %}
-    {% if msg %}
-    {{ msg }}
-    {% endif %}
-    <h2 id="title" style="display:inline;"></h2>
-    <div id="tags"></div>
-    <small>
-        <i>Created: </i><label id="created"></label><br />
-        <i>Last access: </i><label id="last"></label><br />
-        <i>Filename: </i><label id="filename"></label><br />
-    </small>
-    <div id="itemout"></div>
-{% endblock %}
+    <div id="msg">
+        {% if msg %}
+        {{ msg }}
+        {% endif %}
+    </div>
 
+    <div class="container container-fluid" id="itemdisplay">
+
+        <div class="d-flex">
+            <div class=""><h2 id="title" style="display:inline;"></h2></div>
+            <div class=""><ul id="tags" style="display:inline;"></ul></div>
+            <div class="ml-auto"><button id="del-button" type="button" class="btn btn-danger">Delete</button></div>
+        </div>
+
+                <!--
+
+                    .table>tbody>tr>td,
+                    .table>tbody>tr>th {
+                      border-top: none;
+                    }
+
+                    .table-nonfluid {
+                       width: auto !important;
+                    }
+
+                -->
+
+        <table class="table table-sm" style="font-size: 10px;width: auto !important;">
+            <tbody>
+                <tr style="border-top: none;">
+                    <td style="border-top: none;"><i>Created:</td><td style="border-top: none;" id="created"></td>
+                </tr>
+                <tr style="border-top: none;">
+                    <td style="border-top: none;"><i>Last access:</td><td style="border-top: none;" id="last"></td>
+                </tr>
+                <tr style="border-top: none;">
+                    <td style="border-top: none;"><i>Filename:</td><td style="border-top: none;" id="filename"></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div id="itemout"></div>
+    </div>
+
+{% endblock %}
 
 {% block javascript %}
 
 <script>
 $(document).ready(function() {
 
+    var current_item = null;
+    var current_tag = null;
 
+    $('#itemdisplay').hide();
+
+    // get all the tags
     const tags = function() {
         var tmp = null;
         $.ajax({
-            url: {% url 'core:ztags' %},
+            url: "{% url 'core:ztags' %}",
             dataType: 'json',
             async: false,
             success: function (data) {
@@ -61,42 +80,97 @@ $(document).ready(function() {
         return tmp;
     }();
 
-    console.log(tags);
-
-    $(".xlist-group-item").click(function (e) {
+    function get_item(e) {
+        // e is event of clicking on an item
+        const itemid = e.target.id.split('-').slice(-1).pop();
         $.ajax({
-            url: {% url 'core:zitem' %},
+            url: "{% url 'core:zitem' %}",
             data: {
-                'id': e.target.id
+                'id': itemid
             },
             dataType: 'json',
             success: function (data) {
                 if (data.success) {
                     $("#title").html(data.title);
-                    const tagstr = JSON.parse(data.tags).map(
+                    const tageles = JSON.parse(data.tags).map(
                         tid => [tid, tags[tid]]
                     ).sort(
                         (a, b) => a[1].localeCompare(b[1])
                     ).map(
-                        idtag => "<a href='#' class='tagclicker' id=tagid-" + idtag[0] + ">" + idtag[1] + "</a>"
-                    ).join()
+                        idtag => $("<li style='display:inline;'><a href='#' class='taglink'>" + idtag[1] + "</a>&nbsp;</li>")
+                    )
 
-                    console.log(tagstr);
-                    $("#tags").html(tagstr);
+                    $("#tags").empty();
+
+                    tageles.forEach(t => {
+                        t.bind('click', e => get_items(e.target.text));
+                        $("#tags").append(t);
+                    });
+
                     $("#created").html(data.created);
                     $("#last").html(data.last);
                     $("#filename").html(data.filename);
                     $("#itemout").html(data.content);
+                    $('#itemdisplay').show();
+                    $('#msg').hide();
+                    
+                    current_item = itemid;
+
                 } else {
                     alert("Couldn't get info for item " + e.target.id + "\nMessage was: " + data.msg);
                 }
             }
         });
+    }
 
+    // Get the items for a tag
+    function get_items(t) {
+        $.ajax({
+            url: "{% url 'core:zitems' %}",
+            data: {
+                'tag': t
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    $("#sidebar").empty();
+                    JSON.parse(data.items).forEach(idtitle => {
+                        var anc = $("<a href='#' class='itemlink' id='item-" + idtitle[0] + "'>" + idtitle[1] + "</a>");
+                        anc.bind('click', get_item);
+                        $("#sidebar").append(anc);
+                        $("#sidebar").append($("<br />"));
+                        current_tag = t;
+                    });
+                } else {
+                    alert("Couldn't get items for " + t + "\nMessage was: " + data.msg);
+                }
+            }
+        });
+    }
+    $(".taglink").click(function (e) {
+        get_items(e.target.text);
     });
+    get_items('Recipes');
 
-    $(".tagclicker").click(function (e) {
-        console.log(e.target.id);
+
+    $("#del-button").click(function () {
+        if ( ! current_item ) { return }
+        $.ajax({
+            url: "{% url 'core:zitem_delete' %}",
+            data: {
+                'id': current_item
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    $('#itemdisplay').hide();
+                    get_items(current_tag);
+                    current_item = null;
+                } else {
+                    alert("Couldn't delete " + current_item + "\nMessage was: " + data.msg);
+                }
+            }
+        });
     });
 
 

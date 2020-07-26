@@ -15,12 +15,13 @@
 
     <body>
 
-        <div class="container-fluid d-flex flex-column flex-grow-1">
-            
+        <div class="container-fluid mh-100">
+<!--         <div class="container-fluid d-flex flex-column flex-grow-1 vh-100 overflow-auto">-->
+
             <!-- TOP -->
 
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                <a class="navbar-brand" href="{% url 'core:items' %}">Recipes</a>
+                <a class="navbar-brand taglink" href="#">Recipes</a>
 
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -28,10 +29,14 @@
 
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="navbar-nav mr-auto">
+
+                        <li class="nav-item active">
+                            <a href="#" class="nav-link taglink">recent</a>
+                        </li>
                   
                         {% for key, val in tags %}
                             <li class="nav-item active">
-                                <a class="nav-link" href="{% url 'core:items' key %}">{{ val }}</a>
+                                <a href="#" class="nav-link taglink">{{ val }}</a>
                             </li>
                         {% endfor %}
 
@@ -59,7 +64,7 @@
             <div class="container-fluid">
                 <div class="row justify-content-center">
 
-                    <div class="{{ hideme|default_if_none:'' }} col-12 col-sm-3">
+                    <div class="col-12 col-sm-3 vh-100">
                         {% block side %}
                         SIDE
                         {% endblock %}

@@ -77,6 +77,8 @@ class Item(models.Model):
 
         if 'date' in text:
             item.created = text['date']
+        if 'accessed' in text:
+            item.accessed = text['accessed']
 
         tags = []
         if 'tags' in text:

@@ -159,6 +159,51 @@ def item(request, pkey, tag=None):
     return items(request, tag, msg=mark_safe(''.join(msg)), hideme='d-none d-sm-block')
 
 @require_http_methods(["GET"])
+def zitems(request):
+    """Returns items in given tag
+
+    Parameters
+    ----------
+    request : django.http.request
+        request['tag'] is a tag name, or 'recent'
+
+    Returns
+    -------
+    JsonResponse
+        {
+            'success': bool
+            'items': list [(id, title), (id, title) ...]
+            'msg': str
+        }
+        The msg is only there if there was a problem
+
+        If tag is 'Recipes' then all items returned.  If tag is 'recent'
+        return all items sorted by 'accessed'.
+
+    """
+
+    tag = request.GET['tag']
+
+    if tag == 'Recipes':
+        its = Item.objects.all().order_by('title')
+    elif tag == 'recent':
+        # not None means never accessed has key = (False, None), and False goes
+        # first.  Then we reverse if
+        its = sorted(
+            Item.objects.all(),
+            key=lambda ob: (ob.accessed is not None, ob.accessed),
+            reverse=True
+        )
+    else:
+        its = Item.objects.filter(tags__name=tag).order_by('title')
+
+    return JsonResponse({
+        'success': True,
+        'items': json.dumps([(it.id, it.title) for it in its])
+    })
+
+
+@require_http_methods(["GET"])
 def ztags(request):
     """The tags
 
@@ -245,6 +290,39 @@ def zitem(request):
         'tags': json.dumps(tags),
         'filename': os.path.basename(it.path),
         'content': content
+    })
+
+
+
+@require_http_methods(["GET"])
+def zdelete(request):
+    """Delete an item
+
+    Parameters
+    ----------
+    request : django.http.request
+        request['id'] is an item ID
+
+    Returns
+    -------
+    JsonResponse
+        {
+            'success': bool
+            'msg': str
+        }
+        The msg is only there if there was a problem
+
+    """
+
+    try:
+        it = Item.objects.get(pk=json.loads(request.GET['id']))
+        os.unlink(it.path)
+        it.delete()
+    except Exception as exp: # pylint: disable=broad-except
+        return JsonResponse({'success': False, 'msg': str(exp)})
+   
+    return JsonResponse({
+        'success': True,
     })
 
 
