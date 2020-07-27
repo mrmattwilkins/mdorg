@@ -1,3 +1,5 @@
+{% load static %}
+
 <!doctype html>
 <html lang="en">
 
@@ -12,11 +14,9 @@
     <title>Recipes</title>
   </head>
 
-
     <body>
 
-        <div class="container-fluid mh-100">
-<!--         <div class="container-fluid d-flex flex-column flex-grow-1 vh-100 overflow-auto">-->
+		<div class="container-fluid d-flex flex-column flex-grow-1 vh-100 overflow-auto">
 
             <!-- TOP -->
 
@@ -34,12 +34,11 @@
                             <a href="#" class="nav-link taglink">recent</a>
                         </li>
                   
-                        {% for key, val in tags %}
+                        {% for tag in tags %}
                             <li class="nav-item active">
-                                <a href="#" class="nav-link taglink">{{ val }}</a>
+                                <a href="#" class="nav-link taglink">{{ tag }}</a>
                             </li>
                         {% endfor %}
-
 
                     </ul>
 
@@ -49,38 +48,32 @@
                             <a class="nav-link" href="{% url 'core:rescan' %}">Rescan</a>
                         </li>
 
-                        <form action="{% url 'core:search' %}" method="get" class="form-inline my-2 my-lg-0">
-                            {% if tag %}
-                                <input type="hidden" name="tag" value="{{ tag }}">
-                            {% endif %}
-                            <input name='lookfor' class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
-                        </form>
+                        <input id="search-lookfor" class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                        <button class="btn btn-outline-success my-2 my-sm-0" id="search-button">Search</button>
 
                     </ul>
                 </div>
             </nav>
 
-            <div class="container-fluid">
-                <div class="row justify-content-center">
 
-                    <div class="col-12 col-sm-3 vh-100">
-                        {% block side %}
-                        SIDE
-                        {% endblock %}
-                    </div>
+			<!-- MAIN -->
+			<div class="row flex-grow-1 overflow-auto">
 
-                    <div class='col-12 col-sm-9'>
-                        {% block content %}
-                        MAIN
-                        {% endblock %}
-                    </div>
-
+                <div id="sidebar" class="col-sm-3 mh-100 overflow-auto py-2">
+                    {% block side %}
+                    SIDE
+                    {% endblock %}
                 </div>
+
+                <div id="main" class='col-sm-9'>
+                    {% block content %}
+                    MAIN
+                    {% endblock %}
+			    </div>
+
             </div>
 
         </div>
-
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
@@ -93,6 +86,5 @@
     {% block javascript %}{% endblock %}
   </body>
 </html>
-
 
 

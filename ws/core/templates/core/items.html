@@ -2,36 +2,23 @@
 
 
 {% block side %}
-    <div id="sidebar"></div>
+    <div id="sidebar-content"></div>
 {% endblock %}
 
 {% block content %}
     <div id="msg">
-        {% if msg %}
-        {{ msg }}
-        {% endif %}
+        {% if msg %} {{ msg }} {% endif %}
     </div>
 
-    <div class="container container-fluid" id="itemdisplay">
+    <div id="itemdisplay" class="container container-fluid">
+
+        <div id="showside"><button type="button" ></button></div>
 
         <div class="d-flex">
             <div class=""><h2 id="title" style="display:inline;"></h2></div>
             <div class=""><ul id="tags" style="display:inline;"></ul></div>
             <div class="ml-auto"><button id="del-button" type="button" class="btn btn-danger">Delete</button></div>
         </div>
-
-                <!--
-
-                    .table>tbody>tr>td,
-                    .table>tbody>tr>th {
-                      border-top: none;
-                    }
-
-                    .table-nonfluid {
-                       width: auto !important;
-                    }
-
-                -->
 
         <table class="table table-sm" style="font-size: 10px;width: auto !important;">
             <tbody>
@@ -60,13 +47,15 @@ $(document).ready(function() {
     var current_item = null;
     var current_tag = null;
 
+    // Start off with this hidden because messages maybe displayed in the main window
+    // On first item display it will be show()ed.
     $('#itemdisplay').hide();
 
     // get all the tags
     const tags = function() {
         var tmp = null;
         $.ajax({
-            url: "{% url 'core:ztags' %}",
+            url: "{% url 'core:tags' %}",
             dataType: 'json',
             async: false,
             success: function (data) {
@@ -80,11 +69,25 @@ $(document).ready(function() {
         return tmp;
     }();
 
-    function get_item(e) {
+    // If on extra small show side (with col-12) and hide main
+    function show_side_hide_main() {
+        $('#sidebar').removeClass('d-none d-sm-block').addClass('d-block col-12');
+        $('#main').removeClass('d-block col-12').addClass('d-none d-sm-block');
+    }
+    // If on extra small hide side and show main
+    function hide_side_show_main() {
+        $('#sidebar').removeClass('d-block col-12').addClass('d-none d-sm-block');
+        $('#main').removeClass('d-none d-sm-block').addClass('d-block col-12');
+    }
+    $('#showside').click(show_side_hide_main);      // button to show the side
+
+    
+    // Display an item
+    function display_item(e) {
         // e is event of clicking on an item
-        const itemid = e.target.id.split('-').slice(-1).pop();
+        const itemid = e.target.id
         $.ajax({
-            url: "{% url 'core:zitem' %}",
+            url: "{% url 'core:item' %}",
             data: {
                 'id': itemid
             },
@@ -92,29 +95,23 @@ $(document).ready(function() {
             success: function (data) {
                 if (data.success) {
                     $("#title").html(data.title);
-                    const tageles = JSON.parse(data.tags).map(
-                        tid => [tid, tags[tid]]
-                    ).sort(
-                        (a, b) => a[1].localeCompare(b[1])
-                    ).map(
-                        idtag => $("<li style='display:inline;'><a href='#' class='taglink'>" + idtag[1] + "</a>&nbsp;</li>")
-                    )
 
                     $("#tags").empty();
-
-                    tageles.forEach(t => {
-                        t.bind('click', e => get_items(e.target.text));
-                        $("#tags").append(t);
+                    JSON.parse(data.tags).sort().forEach(t => {
+                        var ta = $("<li style='display:inline;'><a href='#' class='taglink'>" + t + "</a>&nbsp;</li>");
+                        ta.bind('click', e => display_items(e.target.text));
+                        $("#tags").append(ta);
                     });
 
                     $("#created").html(data.created);
                     $("#last").html(data.last);
                     $("#filename").html(data.filename);
                     $("#itemout").html(data.content);
+
                     $('#itemdisplay').show();
                     $('#msg').hide();
-                    
                     current_item = itemid;
+                    hide_side_show_main();
 
                 } else {
                     alert("Couldn't get info for item " + e.target.id + "\nMessage was: " + data.msg);
@@ -122,24 +119,26 @@ $(document).ready(function() {
             }
         });
     }
+    $('.itemlink').click(display_item);
 
-    // Get the items for a tag
-    function get_items(t) {
+    // Display the items for tag text
+    function display_items(t) {
         $.ajax({
-            url: "{% url 'core:zitems' %}",
+            url: "{% url 'core:items' %}",
             data: {
                 'tag': t
             },
             dataType: 'json',
             success: function (data) {
                 if (data.success) {
-                    $("#sidebar").empty();
+                    $("#sidebar-content").empty();
                     JSON.parse(data.items).forEach(idtitle => {
-                        var anc = $("<a href='#' class='itemlink' id='item-" + idtitle[0] + "'>" + idtitle[1] + "</a>");
-                        anc.bind('click', get_item);
-                        $("#sidebar").append(anc);
-                        $("#sidebar").append($("<br />"));
+                        var anc = $("<a href='#' class='itemlink' id='" + idtitle[0] + "'>" + idtitle[1] + "</a>");
+                        anc.bind('click', display_item);
+                        $("#sidebar-content").append(anc);
+                        $("#sidebar-content").append($("<br />"));
                         current_tag = t;
+                        show_side_hide_main();
                     });
                 } else {
                     alert("Couldn't get items for " + t + "\nMessage was: " + data.msg);
@@ -148,15 +147,15 @@ $(document).ready(function() {
         });
     }
     $(".taglink").click(function (e) {
-        get_items(e.target.text);
+        display_items(e.target.text);
     });
-    get_items('Recipes');
+    display_items('Recipes');
 
-
+    // Delete button
     $("#del-button").click(function () {
         if ( ! current_item ) { return }
         $.ajax({
-            url: "{% url 'core:zitem_delete' %}",
+            url: "{% url 'core:item_delete' %}",
             data: {
                 'id': current_item
             },
@@ -164,7 +163,7 @@ $(document).ready(function() {
             success: function (data) {
                 if (data.success) {
                     $('#itemdisplay').hide();
-                    get_items(current_tag);
+                    display_items(current_tag);
                     current_item = null;
                 } else {
                     alert("Couldn't delete " + current_item + "\nMessage was: " + data.msg);
@@ -173,6 +172,40 @@ $(document).ready(function() {
         });
     });
 
+    // Search button clicked when type Enter
+    $("#search-lookfor").keypress(function (e) {
+        if (e.which == 13) {
+            $("#search-button").click();
+            return false;
+        }
+    });
+    $("#search-button").click(function () {
+        const lookfor = $("#search-lookfor").val()
+        if ( ! lookfor ) return;
+
+        $.ajax({
+            url: "{% url 'core:search' %}",
+            data: {
+                'tag': current_tag,
+                'lookfor': lookfor
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.success) {
+                    $("#sidebar-content").empty();
+                    JSON.parse(data.items).forEach(item => {
+                        var anc = $("<a href='#' class='itemlink' id='" + item[0] + "'>" + item[1] + "</a>");
+                        anc.bind('click', display_item);
+                        $("#sidebar-content").append(anc);
+                        $("#sidebar-content").append(item[2] ? ("<br />" + item[2] + "<br />") : "<br />");
+                        show_side_hide_main();
+                    });
+                } else {
+                    alert("Couldn't search for " + lookfor + "\nMessage was: " + data.msg);
+                }
+            }
+        });
+    });
 
 });
 </script>
