@@ -46,8 +46,18 @@
 <script>
 $(document).ready(function() {
 
+
     var current_item = null;
     var current_tag = null;
+
+    // If on big screen we need vh-100 so we get scrollbar in the
+    // sidebar, but on small screens we don't want it otherwise the
+    // navbar doesn't push content down properly.
+    // This doesn't handle it when user resizing window.  They will
+    // have to refresh.
+    if ( window.matchMedia("screen and (min-width:768px)").matches ) {
+        $('div.flex-column').addClass('vh-100');
+    }
 
     // Start off with this hidden because messages maybe displayed in the main window
     // On first item display it will be show()ed.
