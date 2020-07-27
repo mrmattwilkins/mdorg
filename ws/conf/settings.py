@@ -22,11 +22,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'lks4#(+b7d@h=x3+@f%83mipodam1n0p)zlejz-n_lo*%d_r)2'
 
-DEBUG = True
+DEBUG = False
 with open('/etc/django_secret_key.txt') as f:
     SECRET_KEY = f.read().strip()
 
-ALLOWED_HOSTS = ['gaia', 'gaia.solace.net', 'localhost']
+ALLOWED_HOSTS = ['solace.ddns.net', 'gaia', 'gaia.solace.net', 'localhost']
 
 DOC_REPO = '/var/tmp/recipes/working/data'
 
