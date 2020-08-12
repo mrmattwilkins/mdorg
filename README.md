@@ -32,7 +32,7 @@ view.  Should be able to create/view/edit/delete.
 
 More-or-less following a cut down version of
 [this](https://djangodeployment.readthedocs.io/en/latest/index.html).
-In summary, apache is serving static files and proxying other requests
+In summary, nginx is serving static files and proxying other requests
 through to gunicorn which via a socket is passing along to Django which
 is running in /var/tmp/mdorg
 
@@ -57,28 +57,53 @@ is running in /var/tmp/mdorg
         mkdir /var/log/mdorg/
         chown user.user /var/log/mdorg/
 
-###  Apache
+###  Nginx
 
-1. a2enmod proxy proxy_http headers
+Set up our site in /etc/nginx/site-enabled
 
-2. Put this in apache.conf
+            location /blah/ {
+                proxy_pass http://unix:/run/mdorg_gunicorn.sock;
+                proxy_set_header Host $http_host;
+                proxy_redirect off;
+                proxy_set_header X-Forwarded-For $remote_addr;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
 
-        <VirtualHost *:80>
 
-            ...
+### Gunicorn
 
-            WSGIDaemonProcess yourapplication user=me group=users threads=5 python-path=/var/tmp/mdorg/ws
+Gunicorn takes requests from nginx and runs Django
 
-            WSGIScriptAlias /wharever /var/tmp/mdorg/ws/conf/wsgi.py
-            <Directory /var/tmp/mdorg/ws>
-                 WSGIProcessGroup yourapplication
-                 WSGIApplicationGroup %{GLOBAL}
-                 WSGIScriptReloading On
-                 Require all granted
-                 AllowOverride All
-            </Directory>
+        cat << 'EOF' > /etc/systemd/system/mdorg_gunicorn.socket
+        [Unit]
+        Description=mdorg gunicorn socket
 
-            ...
+        [Socket]
+        ListenStream=/run/mdorg_gunicorn.sock
 
-        </VirtualHost>
+        [Install]
+        WantedBy=sockets.target
+        EOF
+
+        cat << 'EOF' > /etc/systemd/system/mdorg_gunicorn.service
+        [Unit]
+        Description=mdorg gunicorn daemon
+        Requires=mdorg_gunicorn.socket
+        After=network.target
+
+        [Service]
+        User=blah
+        Group=blah
+        WorkingDirectory=/var/tmp/mdorg/ws
+        ExecStart=/usr/bin/gunicorn3 \
+                  --access-logfile - \
+                  --bind unix:/run/mdorg_gunicorn.sock \
+                  conf.wsgi:application
+
+        [Install]
+        WantedBy=multi-user.target
+
+        EOF
+        systemctl start mdorg_gunicorn.socket
+        systemctl enable mdorg_gunicorn.socket
 
