@@ -224,7 +224,7 @@ def item(request):
     # get the content
     with open(it.path, "r", encoding="utf-8") as fh:
         text = frontmatter.load(fh)
-        content = markdown.markdown(text.content)
+        content = markdown.markdown(text.content, extensions=['tables'])
 
     # save back with correct accessed
     with open(it.path, "w", encoding="utf-8") as fh:
