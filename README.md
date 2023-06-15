@@ -9,11 +9,13 @@ view.  Should be able to create/view/edit/delete.
 
 ## Install
 
-1. Install packages (note we use pip for Django, since the Django
-   version with ubuntu 18.04 is 1.11 which is too old):
 
-        cat requirements_system.txt | xargs sudo apt -y install
-        sudo pip3 install -Ur requirements_pip.txt
+1. Install venv
+
+	python3 -m venv /var/tmp/venvs/mdorg
+	. /var/tmp/venvs/mdorg/bin/activate
+	python -m pip install --upgrade pip
+	pip install -Ur requirements_pip.txt
 
 2. Initialize empty models in the database
 
@@ -27,6 +29,7 @@ view.  Should be able to create/view/edit/delete.
 
         ./ws/manage.py runserver 0:8000
 
+   NB: this didn't work for me, but running it through gunicorn did.
 
 ## Running Django in production
 
@@ -95,7 +98,7 @@ Gunicorn takes requests from nginx and runs Django
         User=blah
         Group=blah
         WorkingDirectory=/var/tmp/mdorg/ws
-        ExecStart=/usr/bin/gunicorn3 \
+        ExecStart=/var/tmp/venvs/mdorg/bin/gunicorn \
                   --access-logfile - \
                   --bind unix:/run/mdorg_gunicorn.sock \
                   conf.wsgi:application

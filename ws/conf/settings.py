@@ -23,7 +23,7 @@ DEBUG = False
 with open('/etc/django_secret_key.txt') as f:
     SECRET_KEY = f.read().strip()
 
-ALLOWED_HOSTS = ['solace.ddns.net', 'gaia', 'gaia.solace.net', 'localhost']
+ALLOWED_HOSTS = ['solace.ddnsgeek.com', 'solace.ddns.net', 'gaia', 'gaia.solace.net', 'localhost']
 
 DOC_REPO = '/home/m/mwilkins/share/food/recipes'
 

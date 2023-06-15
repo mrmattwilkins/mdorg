@@ -1,6 +1,0 @@
-python3-markdown2
-python3-pip
-pylint3
-python3-pylint-django
-python3-pylint-plugin-utils
-python3-markdown
