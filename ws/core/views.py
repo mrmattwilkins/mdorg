@@ -7,15 +7,18 @@ from pathlib import Path
 
 from django.shortcuts import render
 from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse
 
+from django.contrib.auth.decorators import login_required
+
+
 from .models import Item, Tag
 
+
+@login_required(login_url="/recipes/login/")
 def home(request, msg=None):
     """Home view
 
@@ -27,11 +30,17 @@ def home(request, msg=None):
         A mark_safed string to display in the main
     """
 
-    return render(request, 'core/items.html', {
-        'tags': Tag.objects.all().order_by('name').values_list('name', flat=True),
-        'msg': msg
-    })
+    return render(
+        request,
+        "core/items.html",
+        {
+            "tags": Tag.objects.all().order_by("name").values_list("name", flat=True),
+            "msg": msg,
+        },
+    )
 
+
+@login_required(login_url="/recipes/login/")
 def rescan(request):
     """Scan the document repo."""
 
@@ -42,16 +51,18 @@ def rescan(request):
     # warning messages
     msg = []
 
-    for path in Path(settings.DOC_REPO).rglob('*.md'):
+    for path in Path(settings.DOC_REPO).rglob("*.md"):
         try:
             it, tags = Item.create(path)
             it.save()
             it.tags.add(*tags)
         except Exception as exp:
             msg.append(str(exp))
-   
-    return home(request, msg=mark_safe('<br />'.join(msg)))
 
+    return home(request, msg=mark_safe("<br />".join(msg)))
+
+
+@login_required(login_url="/recipes/login/")
 @require_http_methods(["GET"])
 def search(request):
     """Search for items containing text.
@@ -76,12 +87,12 @@ def search(request):
 
     """
 
-    txt, tag = request.GET['lookfor'], request.GET.get('tag', None)
+    txt, tag = request.GET["lookfor"], request.GET.get("tag", None)
 
-    if tag and tag not in ('Recipes', 'recent'):
-        its = Item.objects.filter(tags__name=tag).order_by('title')
+    if tag and tag not in ("Recipes", "recent"):
+        its = Item.objects.filter(tags__name=tag).order_by("title")
     else:
-        its = Item.objects.all().order_by('title')
+        its = Item.objects.all().order_by("title")
 
     items = []
     for it in its:
@@ -93,22 +104,23 @@ def search(request):
         if re.search(txt, it.title, re.IGNORECASE):
             found, context = it, None
         else:
-            with open(it.path, 'r') as handle:
+            with open(it.path, "r") as handle:
                 body = frontmatter.load(handle).content
                 m = re.search(txt, body, re.IGNORECASE)
                 if m:
                     found = it
-                    context = f"...{body[max(m.start()-20, 0):min(m.end()+20, len(body))]}..."""
-       
+                    context = (
+                        f"...{body[max(m.start()-20, 0):min(m.end()+20, len(body))]}..."
+                        ""
+                    )
+
         if found:
             items.append([it.id, it.title, context])
 
-    return JsonResponse({
-        'success': True,
-        'items': json.dumps(items)
-    })
+    return JsonResponse({"success": True, "items": json.dumps(items)})
 
 
+@login_required(login_url="/recipes/login/")
 @require_http_methods(["GET"])
 def items(request):
     """Returns items in given tag
@@ -133,27 +145,27 @@ def items(request):
 
     """
 
-    tag = request.GET['tag']
+    tag = request.GET["tag"]
 
-    if tag == 'Recipes':
-        its = Item.objects.all().order_by('title')
-    elif tag == 'recent':
+    if tag == "Recipes":
+        its = Item.objects.all().order_by("title")
+    elif tag == "recent":
         # not None means never accessed has key = (False, None), and False goes
         # first.  Then we reverse if
         its = sorted(
             Item.objects.all(),
             key=lambda ob: (ob.accessed is not None, ob.accessed),
-            reverse=True
+            reverse=True,
         )
     else:
-        its = Item.objects.filter(tags__name=tag).order_by('title')
+        its = Item.objects.filter(tags__name=tag).order_by("title")
 
-    return JsonResponse({
-        'success': True,
-        'items': json.dumps([(it.id, it.title) for it in its])
-    })
+    return JsonResponse(
+        {"success": True, "items": json.dumps([(it.id, it.title) for it in its])}
+    )
 
 
+@login_required(login_url="/recipes/login/")
 @require_http_methods(["GET"])
 def tags(request):
     """The tags
@@ -174,18 +186,12 @@ def tags(request):
 
     """
 
-    tags = {
-        t.id: t.name
-        for t in Tag.objects.all().order_by('name')
-    }
+    tags = {t.id: t.name for t in Tag.objects.all().order_by("name")}
 
-    return JsonResponse({
-        'success': True,
-        'tags': json.dumps(tags)
-    })
+    return JsonResponse({"success": True, "tags": json.dumps(tags)})
 
 
-
+@login_required(login_url="/recipes/login/")
 @require_http_methods(["GET"])
 def item(request):
     """An item
@@ -213,38 +219,45 @@ def item(request):
     """
 
     try:
-        it = Item.objects.get(pk=json.loads(request.GET['id']))
-    except Exception as exp: # pylint: disable=broad-except
-        return JsonResponse({'success': False, 'msg': str(exp)})
-    
+        it = Item.objects.get(pk=json.loads(request.GET["id"]))
+    except Exception as exp:  # pylint: disable=broad-except
+        return JsonResponse({"success": False, "msg": str(exp)})
+
     tags = [t.name for t in it.tags.all()]
-    created = timezone.localtime(it.created).strftime("%Y-%m-%d %H:%M") if it.created else None
-    last = timezone.localtime(it.accessed).strftime("%Y-%m-%d %H:%M") if it.accessed else 'never'
+    timezone.localtime(it.created).strftime("%Y-%m-%d %H:%M") if it.created else None
+    last = (
+        timezone.localtime(it.accessed).strftime("%Y-%m-%d %H:%M")
+        if it.accessed
+        else "never"
+    )
 
     # get the content
     with open(it.path, "r", encoding="utf-8") as fh:
         text = frontmatter.load(fh)
-        content = markdown.markdown(text.content, extensions=['tables'])
+        content = markdown.markdown(text.content, extensions=["tables"])
 
     # save back with correct accessed
     with open(it.path, "w", encoding="utf-8") as fh:
-        text['accessed'] = it.accessed = timezone.now()
+        text["accessed"] = it.accessed = timezone.now()
         fh.write(frontmatter.dumps(text))
         it.save()
 
-    return JsonResponse({
-        'success': True,
-        'title': it.title,
-        'created': timezone.localtime(it.created).strftime("%Y-%m-%d %H:%M")
-                   if it.created else None,
-        'last': last,
-        'tags': json.dumps(tags),
-        'filename': os.path.basename(it.path),
-        'content': content
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "title": it.title,
+            "created": timezone.localtime(it.created).strftime("%Y-%m-%d %H:%M")
+            if it.created
+            else None,
+            "last": last,
+            "tags": json.dumps(tags),
+            "filename": os.path.basename(it.path),
+            "content": content,
+        }
+    )
 
 
-
+@login_required(login_url="/recipes/login/")
 @require_http_methods(["GET"])
 def delete(request):
     """Delete an item
@@ -266,15 +279,14 @@ def delete(request):
     """
 
     try:
-        it = Item.objects.get(pk=json.loads(request.GET['id']))
+        it = Item.objects.get(pk=json.loads(request.GET["id"]))
         os.unlink(it.path)
         it.delete()
-    except Exception as exp: # pylint: disable=broad-except
-        return JsonResponse({'success': False, 'msg': str(exp)})
-   
-    return JsonResponse({
-        'success': True,
-    })
+    except Exception as exp:  # pylint: disable=broad-except
+        return JsonResponse({"success": False, "msg": str(exp)})
 
-
-
+    return JsonResponse(
+        {
+            "success": True,
+        }
+    )

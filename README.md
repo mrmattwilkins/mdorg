@@ -29,7 +29,11 @@ view.  Should be able to create/view/edit/delete.
 
         ./ws/manage.py runserver 0:8000
 
-   NB: this didn't work for me, but running it through gunicorn did.
+5. Make an admin user
+
+        ./manage.py  createsuperuser
+
+    hen can browse to http://localhost:8000/admin and login to make a regular user
 
 ## Running Django in production
 
