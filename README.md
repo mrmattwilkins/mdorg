@@ -33,7 +33,11 @@ view.  Should be able to create/view/edit/delete.
 
         ./manage.py  createsuperuser
 
-    hen can browse to http://localhost:8000/admin and login to make a regular user
+   then can browse to http://localhost:8000/admin and login to make a regular user.
+   NB: due to the reverse proxy only urls starting with recipes get through,
+   but the admin interface starts with admin, so the admin interface is only
+   available by starting the development server.  Extra security, but also I
+   couldn't figure out how to do otherwise.
 
 ## Running Django in production
 
