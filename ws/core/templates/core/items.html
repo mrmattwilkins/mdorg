@@ -219,7 +219,26 @@ $(document).ready(function() {
         });
     });
 
+
+    let wakeLock = null;
+
+    // Function to request a wake lock
+    const requestWakeLock = async () => {
+      try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake Lock is active');
+        
+        wakeLock.addEventListener('release', () => {
+          console.log('Wake Lock has been released');
+        });
+      } catch (err) {
+        console.error(`Failed to obtain wake lock: ${err}`);
+      }
+    };
+
+    requestWakeLock();
 });
+
 </script>
 
 
